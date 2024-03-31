@@ -197,7 +197,7 @@ class AdaptorService(
         val body = requestData.body
 
         val connectionProvider =
-            ConnectionProvider.builder("myConnectionPool").maxConnections(userCount?:10000).pendingAcquireMaxCount(10000).build()
+            ConnectionProvider.builder("myConnectionPool").maxConnections(userCount?:10000).pendingAcquireMaxCount(userCount?:10000).build()
 
 //        val httpClient = if(userCount == null){
 //            HttpClient.create()
@@ -205,9 +205,9 @@ class AdaptorService(
 //            HttpClient.create(connectionProvider)
 //        }
 
-//        val httpClient = HttpClient.create(connectionProvider)
-        val httpClient = HttpClient.create()
-//        httpClient
+        val httpClient = HttpClient.create(connectionProvider)
+//        val httpClient = HttpClient.create()
+        httpClient
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTime * 1000)
             .doOnConnected { conn ->
                 conn
