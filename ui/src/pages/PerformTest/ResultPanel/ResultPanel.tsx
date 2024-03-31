@@ -1,13 +1,17 @@
-import { Blinker, Funnel, Tabs, TabsItem } from '@/components'
+import { Blinker, Button, Funnel, Progress, Tabs, TabsItem } from '@/components'
+import { MetaDataForTestState } from '@/data/store'
 import { color } from '@/data/variables.style'
 import { parseResponse, ServerResponse } from '@/features/API'
-import { useQueuing } from '@/hooks'
+import { useQueueing } from '@/hooks'
 import { css } from '@emotion/react'
-import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useWebSocket from 'react-use-websocket'
-import { ResultGraph } from './ResultGraph'
-import { ResultTree } from './ResultTree'
-import { SummaryReport } from './SummaryReport'
+import { useRecoilValue } from 'recoil'
+
+const ResultGraph = lazy(() => import('./ResultGraph').then(module => ({ default: module['ResultGraph'] })))
+const ResultTree = lazy(() => import('./ResultTree').then(module => ({ default: module['ResultTree'] })))
+const SummaryReport = lazy(() => import('./SummaryReport').then(module => ({ default: module['SummaryReport'] })))
+
 import { APITestResponse } from './types'
 import { composeGraphData } from './utils/composeGraphData'
 import { composeSummaryReport } from './utils/composeSummaryReport'
@@ -31,22 +35,24 @@ const steps: TabsItem[] = [
 ]
 
 interface ResultPanelProps {
+  goToEdit: () => void
   startTestMsg: string | null
 }
 
-export const ResultPanel: FC<ResultPanelProps> = memo(({ startTestMsg }) => {
+export const ResultPanel: FC<ResultPanelProps> = memo(({ goToEdit, startTestMsg }) => {
+  const testMetaData = useRecoilValue(MetaDataForTestState)
   const [APITestResponses, setAPITestResponses] = useState<APITestResponse[]>([])
   const [step, setStep] = useState<(typeof steps)[number]>(steps[0])
-  const startTimeRef = useRef(0)
+  const startTimeRef = useRef(Date.now())
   // websocket
-  useQueuing({
+  useQueueing({
     websocketUrl: testWebsocketUrl,
     startMsg: startTestMsg,
     onQueue: useCallback((queue: Array<MessageEvent<any>>) => {
       setAPITestResponses(prev => {
         const added = queue.map(msg => {
           const response = parseTestResponse(JSON.parse(msg?.data))
-          response.totalTime = msg?.timeStamp as number
+          response.timeStamp = msg?.timeStamp as number
           return response
         })
         return [...prev, ...added]
@@ -67,33 +73,48 @@ export const ResultPanel: FC<ResultPanelProps> = memo(({ startTestMsg }) => {
 
   const graphData = useMemo(() => composeGraphData(startTimeRef.current, APITestResponses), [APITestResponses])
 
+  const { repeatCount, interval, userCount } = testMetaData
+
+  const testPercent = Number(((APITestResponses.length / (repeatCount * userCount)) * 100).toFixed())
+  const testElapsedTime = Number((((100 - testPercent) / 100) * (repeatCount - 1) * interval).toFixed(2))
+
   return (
-    <section css={wrapperCss}>
-      <Tabs
-        items={steps}
-        selectedCode={step.code}
-        onSelect={onSelectTab}
-        background={color.background}
-        tabPosition="top"
-      />
-      <div css={contentCss}>
-        <Blinker _key={step.code}>
-          <Funnel step={step.code}>
-            <div css={flexCss}>
-              <Funnel.Step name="ResultTree">
-                <ResultTree APITestResponses={APITestResponses} />
-              </Funnel.Step>
-              <Funnel.Step name="SummaryReport">
-                <SummaryReport summaryReport={summaryReport} />
-              </Funnel.Step>
-              <Funnel.Step name="ResultGraph">
-                <ResultGraph graphData={graphData} />
-              </Funnel.Step>
-            </div>
-          </Funnel>
-        </Blinker>
+    <>
+      <div css={controlCss}>
+        <Progress percent={testPercent} elapsedTime={testElapsedTime} />
+        <Button onClick={goToEdit} _css={backButtonCss}>
+          뒤로 가기
+        </Button>
       </div>
-    </section>
+      <section css={wrapperCss}>
+        <Tabs
+          items={steps}
+          selectedCode={step.code}
+          onSelect={onSelectTab}
+          background={color.background}
+          tabPosition="top"
+        />
+        <div css={contentCss}>
+          <Blinker _key={step.code}>
+            <Suspense fallback={<span>로딩 중...</span>}>
+              <Funnel step={step.code}>
+                <div css={flexCss}>
+                  <Funnel.Step name="ResultTree">
+                    <ResultTree APITestResponses={APITestResponses} />
+                  </Funnel.Step>
+                  <Funnel.Step name="SummaryReport">
+                    <SummaryReport summaryReport={summaryReport} />
+                  </Funnel.Step>
+                  <Funnel.Step name="ResultGraph">
+                    <ResultGraph graphData={graphData} />
+                  </Funnel.Step>
+                </div>
+              </Funnel>
+            </Suspense>
+          </Blinker>
+        </div>
+      </section>
+    </>
   )
 })
 
@@ -115,4 +136,19 @@ const contentCss = css`
 const flexCss = css`
   display: flex;
   ${wrapperCss};
+`
+const controlCss = css`
+  display: flex;
+  position: absolute;
+  right: 12px;
+  align-items: center;
+`
+
+const backButtonCss = css`
+  background: white;
+  color: black;
+  top: 10px;
+  height: 40px;
+  font-size: 16px;
+  margin-left: 16px;
 `
