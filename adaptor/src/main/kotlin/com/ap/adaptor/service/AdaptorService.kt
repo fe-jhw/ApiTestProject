@@ -31,6 +31,7 @@ import reactor.netty.http.client.HttpClient
 import reactor.netty.resources.ConnectionProvider
 import java.net.ConnectException
 import java.net.HttpCookie
+import kotlin.math.max
 import kotlin.system.measureTimeMillis
 
 @Service
@@ -80,12 +81,14 @@ class AdaptorService(
 
             }
             PerformType.CONCUR -> {
-                totalTime = measureTimeMillis {
-                    val deferredValue = requestList.map { async { responseWithTime(it, userCount) } }
-                    val totalResponseWithTime = deferredValue.awaitAll()
+                val deferredValue = requestList.map { async {
+                    val responseWithTime = responseWithTime(it, userCount)
+                    totalTime = max(responseWithTime.responseTime, totalTime)
+                    responseWithTime
+                } }
+                val totalResponseWithTime = deferredValue.awaitAll()
 
-                    responsesResult = totalResponseWithTime as MutableList<ResponseData>
-                }
+                responsesResult = totalResponseWithTime as MutableList<ResponseData>
 
                 responsesResult.forEach { response ->
                     if (response.status != HttpStatus.OK.toString()) {
