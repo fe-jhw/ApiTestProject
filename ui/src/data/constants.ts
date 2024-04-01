@@ -25,7 +25,7 @@ export const getDefaultFetchApiResponse = (): FetchApiResponse => ({
   status: '200',
   body: {},
   headers: {},
-  cookies: {},
+  cookies: [],
   url: '',
   httpMethod: 'GET',
 })

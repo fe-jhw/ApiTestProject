@@ -29,7 +29,7 @@ export interface ServerResponse {
   status: string
   body: object
   header: object
-  cookie: object
+  cookie: object[]
   url: string
   httpMethod: string
 }

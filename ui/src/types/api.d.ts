@@ -27,7 +27,7 @@ declare module 'api-types' {
     status: string
     body: Dictionary<any> | string
     headers: Dictionary<any>
-    cookies: Dictionary<any>
+    cookies: Array<Dictionary<any>>
     url: string
     httpMethod: string
   }
