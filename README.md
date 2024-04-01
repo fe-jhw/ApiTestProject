@@ -1,7 +1,8 @@
 # PostWeb
 
 <div align="center">
-메인 아이콘 사진 있으면 넣기
+	<img src = './logo192.png'
+</div>
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Ftmdrl5779%2FApiTestProject&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
@@ -16,9 +17,9 @@
 
 ## Member
 
-|      김승기       |          정현우         |                                                                                                              
-| :------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: | 
-|   주소?  |    주소?  |
+|      김승기       |          정현우         |
+| :------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: |
+|   주소?  | https://github.com/fe-jhw |
 | Back-End | Front-End |
 
 ## Proejct Info
@@ -45,7 +46,10 @@ xxx
 
 ## Stacks 
 ### Development
-- JS
+- Frontend
+  - TypeScript
+  - React 18
+
 - Kotlin
 - ...
 
